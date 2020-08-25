@@ -9,4 +9,4 @@ src/.ipynb_checkpoints/Mixed Precision Training-test-checkpoint.ipynb
 src/.ipynb_checkpoints/federated_main-Mixed Precision Training-checkpoint.ipynb
 src/Mixed Precision Training-test.ipynb
 src/federated_main-Mixed Precision Training.ipynb
-
+src/_pycache_/*
