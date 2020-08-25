@@ -53,6 +53,9 @@ if __name__ == '__main__':
     # cluster_size = 50
     print("Each cluster size: ", cluster_size)
 
+    cluster_users = []
+    for i in range(args.num_clusters):
+        cluster_users.append(keylist[i*cluster_size:(i+1)*cluster_size])
     # Cluster 1
     A1 = keylist[:cluster_size]
     # A1 = np.random.choice(keylist, cluster_size, replace=False)
