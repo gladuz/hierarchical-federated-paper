@@ -100,6 +100,12 @@ if __name__ == '__main__':
 
 
     # ======= Set the cluster models to train and send it to device. =======
+    cluster_models = []
+    for i in range(args.num_clusters):
+        model = build_model(args, train_dataset)
+        model.to(device)
+        model.train()
+        cluster_models.append(model)
     # Cluster A
     cluster_modelA = build_model(args, train_dataset)
     cluster_modelA.to(device)
