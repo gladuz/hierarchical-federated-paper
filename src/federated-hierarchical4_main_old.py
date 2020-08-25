@@ -158,13 +158,7 @@ if __name__ == '__main__':
         # ======= Dynamic training cluster ======= 
         for i in range(args.num_clusters):
             _, weights, losses = fl_train(args, train_dataset, cluster_models[i], cluster_users[i], cluster_user_groups[i], args.Cepochs, logger)  
-            cluster_model = copy.deepcopy(global_model)
-            cluster_model.load_state_dict(weights)
-            local_model = LocalUpdate(args=args, dataset=train_dataset,
-                                      idxs=np.arange(200), logger=logger)
-            w, loss = local_model.update_weights( # update_weights() contain multiple prints
-                model=cluster_model, global_round=epoch) # w = local model weights
-            local_weights.append(copy.deepcopy(w))
+            local_weights.append(copy.deepcopy(weights))
             local_losses.append(copy.deepcopy(losses))    
             cluster_models[i] = global_model
 
@@ -238,7 +232,7 @@ if __name__ == '__main__':
     print("|---- Test Accuracy: {:.2f}%".format(100*test_acc))
 
     # Saving the objects train_loss and train_accuracy:
-    file_name = '../save/objects/HFL4_{}_{}_{}_lr[{}]_C[{}]_iid[{}]_E[{}]_B[{}].pkl'.\
+    file_name = '../save/objects/old_HFL4_{}_{}_{}_lr[{}]_C[{}]_iid[{}]_E[{}]_B[{}].pkl'.\
     format(args.dataset, args.model, epoch, args.lr, args.frac, args.iid,
            args.local_ep, args.local_bs)
 
@@ -257,16 +251,12 @@ if __name__ == '__main__':
     plt.savefig('../save/fed_{}_{}_{}_C[{}]_iid[{}]_E[{}]_B[{}]_acc.png'.
                 format(args.dataset, args.model, args.epochs, args.frac,
                        args.iid, args.local_ep, args.local_bs))
-
-        # PLOTTING (optional)
-
     # Plot Average Accuracy vs Communication rounds
     plt.figure()
     plt.title('Average loss vs Communication rounds')
     plt.plot(range(len(train_loss)), train_loss, color='k')
     plt.ylabel('Average Accuracy')
     plt.xlabel('Communication Rounds')
-    plt.savefig('../save/fed_{}_{}_{}_C[{}]_iid[{}]_E[{}]_B[{}]_loss.png'.
+    plt.savefig('../save/old_fed_{}_{}_{}_C[{}]_iid[{}]_E[{}]_B[{}]_loss.png'.
                 format(args.dataset, args.model, args.epochs, args.frac,
                        args.iid, args.local_ep, args.local_bs))
-    
