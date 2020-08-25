@@ -54,8 +54,11 @@ if __name__ == '__main__':
     print("Each cluster size: ", cluster_size)
 
     cluster_users = []
+    cluster_user_groups = []
     for i in range(args.num_clusters):
         cluster_users.append(keylist[i*cluster_size:(i+1)*cluster_size])
+        user_groups_local = {k:user_groups[k] for k in cluster_users[i] if k in user_groups}
+        cluster_user_groups.append(user_groups)
     # Cluster 1
     A1 = keylist[:cluster_size]
     # A1 = np.random.choice(keylist, cluster_size, replace=False)
@@ -150,26 +153,34 @@ if __name__ == '__main__':
         # ============== TRAIN ==============
         global_model.train()
         
-        # ===== Cluster A ===== 
-        _, A_weights, A_losses = fl_train(args, train_dataset, cluster_modelA, A1, user_groupsA, args.Cepochs, logger)        
-        local_weights.append(copy.deepcopy(A_weights))
-        local_losses.append(copy.deepcopy(A_losses))    
-        cluster_modelA = global_model #= A_model        
-        # ===== Cluster B ===== 
-        B_model, B_weights, B_losses = fl_train(args, train_dataset, cluster_modelB, B1, user_groupsB, args.Cepochs, logger)
-        local_weights.append(copy.deepcopy(B_weights))
-        local_losses.append(copy.deepcopy(B_losses))
-        cluster_modelB = global_model #= B_model 
-        # ===== Cluster C ===== 
-        C_model, C_weights, C_losses = fl_train(args, train_dataset, cluster_modelC, C1, user_groupsC, args.Cepochs, logger)
-        local_weights.append(copy.deepcopy(C_weights))
-        local_losses.append(copy.deepcopy(C_losses))   
-        cluster_modelC = global_model #= C_model      
-        # ===== Cluster D ===== 
-        D_model, D_weights, D_losses = fl_train(args, train_dataset, cluster_modelD, D1, user_groupsD, args.Cepochs, logger)
-        local_weights.append(copy.deepcopy(D_weights))
-        local_losses.append(copy.deepcopy(D_losses))
-        cluster_modelD= global_model #= D_model 
+        # ======= Dynamic training cluster ======= 
+        for i in range(args.num_clusters):
+            _, weights, losses = fl_train(args, train_dataset, cluster_models[i], cluster_users[i], cluster_user_groups[i], args.Cepochs, logger)  
+            local_weights.append(copy.deepcopy(weights))
+            local_losses.append(copy.deepcopy(losses))    
+            cluster_models[i] = global_model
+
+
+        # # ===== Cluster A ===== 
+        # _, A_weights, A_losses = fl_train(args, train_dataset, cluster_modelA, A1, user_groupsA, args.Cepochs, logger)        
+        # local_weights.append(copy.deepcopy(A_weights))
+        # local_losses.append(copy.deepcopy(A_losses))    
+        # cluster_modelA = global_model #= A_model        
+        # # ===== Cluster B ===== 
+        # B_model, B_weights, B_losses = fl_train(args, train_dataset, cluster_modelB, B1, user_groupsB, args.Cepochs, logger)
+        # local_weights.append(copy.deepcopy(B_weights))
+        # local_losses.append(copy.deepcopy(B_losses))
+        # cluster_modelB = global_model #= B_model 
+        # # ===== Cluster C ===== 
+        # C_model, C_weights, C_losses = fl_train(args, train_dataset, cluster_modelC, C1, user_groupsC, args.Cepochs, logger)
+        # local_weights.append(copy.deepcopy(C_weights))
+        # local_losses.append(copy.deepcopy(C_losses))   
+        # cluster_modelC = global_model #= C_model      
+        # # ===== Cluster D ===== 
+        # D_model, D_weights, D_losses = fl_train(args, train_dataset, cluster_modelD, D1, user_groupsD, args.Cepochs, logger)
+        # local_weights.append(copy.deepcopy(D_weights))
+        # local_losses.append(copy.deepcopy(D_losses))
+        # cluster_modelD= global_model #= D_model 
         
         
         # averaging global weights
