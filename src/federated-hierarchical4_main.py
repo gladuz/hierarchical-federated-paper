@@ -115,11 +115,13 @@ if __name__ == '__main__':
                 _, weights, losses = fl_train(args, train_dataset, cluster_model, cluster_users[i], cluster_user_groups[i], args.Cepochs, logger)  
                 cluster_model.load_state_dict(weights)
             w = None
+
             for i in range(10):
                 local_model = LocalUpdate(args=args, dataset=train_dataset,
                                         idxs=np.arange(5000), logger=logger)
                 w, loss = local_model.update_weights( # update_weights() contain multiple prints
                     model=cluster_model, global_round=epoch) # w = local model weights
+                cluster_model.load_state_dict(w)
             local_weights.append(copy.deepcopy(w))
             local_losses.append(copy.deepcopy(losses))    
             cluster_models[i] = global_model
