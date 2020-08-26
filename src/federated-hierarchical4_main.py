@@ -43,7 +43,7 @@ if __name__ == '__main__':
     # keylist = list(user_groups.keys())
     # ======= Shuffle dataset ======= 
     keys =  list(user_groupsold.keys())
-    random.shuffle(keys)
+    #random.shuffle(keys)
     user_groups = dict()
     for key in keys:
         user_groups.update({key:user_groupsold[key]})
@@ -61,30 +61,6 @@ if __name__ == '__main__':
         cluster_users.append(keylist[i*cluster_size:(i+1)*cluster_size])
         user_groups_local = {k:user_groups[k] for k in cluster_users[i] if k in user_groups}
         cluster_user_groups.append(user_groups)
-    # Cluster 1
-    A1 = keylist[:cluster_size]
-    # A1 = np.random.choice(keylist, cluster_size, replace=False)
-    print("A1: ", A1)
-    user_groupsA = {k:user_groups[k] for k in A1 if k in user_groups}
-    print("Size of cluster 1: ", len(user_groupsA))
-    # Cluster 2
-    B1 = keylist[cluster_size:2*cluster_size]
-    # B1 = np.random.choice(keylist, cluster_size, replace=False)    
-    print("B1: ", B1)
-    user_groupsB = {k:user_groups[k] for k in B1 if k in user_groups}
-    print("Size of cluster 2: ", len(user_groupsB))
-    # Cluster 3
-    C1 = keylist[2*cluster_size:3*cluster_size]
-    # C1 = np.random.choice(keylist, cluster_size, replace=False)
-    print("C1: ", C1)
-    user_groupsC = {k:user_groups[k] for k in C1 if k in user_groups}
-    print("Size of cluster 3: ", len(user_groupsC))
-    # Cluster 4
-    D1 = keylist[3*cluster_size:4*cluster_size]
-    # D1 = np.random.choice(keylist, cluster_size, replace=False)
-    print("D1: ", D1)
-    user_groupsD = {k:user_groups[k] for k in D1 if k in user_groups}
-    print("Size of cluster 4: ", len(user_groupsD))
 
     # MODEL PARAM SUMMARY
     global_model = build_model(args, train_dataset)
@@ -111,30 +87,6 @@ if __name__ == '__main__':
         model.to(device)
         model.train()
         cluster_models.append(model)
-    # Cluster A
-    cluster_modelA = build_model(args, train_dataset)
-    cluster_modelA.to(device)
-    cluster_modelA.train()
-    # copy weights
-    cluster_modelA_weights = cluster_modelA.state_dict()
-    # Cluster B
-    cluster_modelB = build_model(args, train_dataset)
-    cluster_modelB.to(device)
-    cluster_modelB.train()
-    # copy weights
-    cluster_modelB_weights = cluster_modelB.state_dict()
-    # Cluster C
-    cluster_modelC = build_model(args, train_dataset)
-    cluster_modelC.to(device)
-    cluster_modelC.train()
-    # copy weights
-    cluster_modelC_weights = cluster_modelC.state_dict()
-    # Cluster D
-    cluster_modelD = build_model(args, train_dataset)
-    cluster_modelD.to(device)
-    cluster_modelD.train()
-    # copy weights
-    cluster_modelD_weights = cluster_modelD.state_dict()
 
 
     train_loss, train_accuracy = [], []
@@ -157,9 +109,11 @@ if __name__ == '__main__':
         
         # ======= Dynamic training cluster ======= 
         for i in range(args.num_clusters):
-            _, weights, losses = fl_train(args, train_dataset, cluster_models[i], cluster_users[i], cluster_user_groups[i], args.Cepochs, logger)  
-            cluster_model = copy.deepcopy(global_model)
-            cluster_model.load_state_dict(weights)
+            cluster_model = cluster_models[i]
+            losses = None
+            for i in range(2):
+                _, weights, losses = fl_train(args, train_dataset, cluster_model, cluster_users[i], cluster_user_groups[i], args.Cepochs, logger)  
+                cluster_model.load_state_dict(weights)
             local_model = LocalUpdate(args=args, dataset=train_dataset,
                                       idxs=np.arange(200), logger=logger)
             w, loss = local_model.update_weights( # update_weights() contain multiple prints

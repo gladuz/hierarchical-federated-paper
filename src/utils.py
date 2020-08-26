@@ -7,7 +7,7 @@ import torch
 import numpy as np
 from sys import exit
 from torchvision import datasets, transforms
-from sampling import mnist_iid, mnist_noniid, mnist_noniid_unequal
+from sampling import mnist_iid, mnist_noniid, mnist_noniid_unequal, mnist_noniid_clustered
 from sampling import cifar_iid, cifar_noniid
 from models import MLP, CNNMnist, CNNFashion_Mnist, CNNCifar
 import update
@@ -79,7 +79,10 @@ def get_dataset(args):
             else:
                 # Chose equal splits for every user
                 print("Dataset: MNIST equal Non-IID")
-                user_groups = mnist_noniid(train_dataset, args.num_users)
+                if args.clustered_data:
+                    user_groups = mnist_noniid_clustered(train_dataset, args.num_users)
+                else:
+                    user_groups = mnist_noniid(train_dataset, args.num_users)
                 
     else:
         exit("No such dataset: " + args.dataset)
