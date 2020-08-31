@@ -60,7 +60,7 @@ if __name__ == '__main__':
     for i in range(args.num_clusters):
         cluster_users.append(keylist[i*cluster_size:(i+1)*cluster_size])
         user_groups_local = {k:user_groups[k] for k in cluster_users[i] if k in user_groups}
-        cluster_user_groups.append(user_groups)
+        cluster_user_groups.append(user_groups_local)
 
     # MODEL PARAM SUMMARY
     global_model = build_model(args, train_dataset)

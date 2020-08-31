@@ -31,35 +31,7 @@ def mnist_noniid(dataset, num_users):
     :return:
     """
     # 60,000 training imgs -->  200 imgs/shard X 300 shards
-    num_shards, num_imgs = 300, 200
-    idx_shard = [i for i in range(num_shards)]
-    dict_users = {i: np.array([]) for i in range(num_users)}
-    idxs = np.arange(num_shards*num_imgs)
-    labels = dataset.train_labels.numpy()
-
-    # sort labels
-    idxs_labels = np.vstack((idxs, labels))
-    idxs_labels = idxs_labels[:, idxs_labels[1, :].argsort()]
-    idxs = idxs_labels[0, :]
-
-    # divide and assign 2 shards/client
-    for i in range(num_users):
-        rand_set = set(np.random.choice(idx_shard, 2, replace=False))
-        idx_shard = list(set(idx_shard) - rand_set)
-        for rand in rand_set:
-            dict_users[i] = np.concatenate(
-                (dict_users[i], idxs[rand*num_imgs:(rand+1)*num_imgs]), axis=0)
-    return dict_users
-
-def mnist_noniid_clustered(dataset, num_users):
-    """
-    Sample non-I.I.D client data from MNIST dataset
-    :param dataset:
-    :param num_users:
-    :return:
-    """
-    # 60,000 training imgs -->  200 imgs/shard X 300 shards
-    num_shards, num_imgs = 440, 125
+    num_shards, num_imgs = 120, 500
     idx_shard = [i for i in range(num_shards)]
     dict_users = {i: np.array([]) for i in range(num_users)}
     idxs = np.arange(num_shards*num_imgs)
@@ -72,11 +44,55 @@ def mnist_noniid_clustered(dataset, num_users):
 
     # divide and assign 2 shards/client
     for i in range(num_users):
-        rand_set = set(idx_shard[:2])
-        idx_shard = list(set(idx_shard) - rand_set)
+        rand_set = [i*2, i*2+1]
         for rand in rand_set:
             dict_users[i] = np.concatenate(
                 (dict_users[i], idxs[rand*num_imgs:(rand+1)*num_imgs]), axis=0)
+    
+    order = [   0,5,10,15,20,3,7,14,18,22,
+                27,28,16,17,36,37,40,41,11,12,
+                31,32,42,43,44,21,23,24,48,49,
+                25,26,29,19,6,8,2,13,33,34,
+                45,46,47,1,4,9,30,35,38,39,]
+    new_dict_users = {i: np.array([]) for i in range(num_users)}
+    for i in range(50):
+        new_dict_users[i] = dict_users[order[i]]
+    return new_dict_users
+
+def mnist_noniid_clustered(dataset, num_users):
+    """
+    Sample non-I.I.D client data from MNIST dataset
+    :param dataset:
+    :param num_users:
+    :return:
+    """
+    # 60,000 training imgs -->  200 imgs/shard X 300 shards
+    num_shards, num_imgs = 400, 125
+    idx_shard = [i for i in range(num_shards)]
+    dict_users = {i: np.array([]) for i in range(num_users)}
+    idxs = np.arange(60000)
+    labels = dataset.train_labels.numpy()
+
+    # sort labels
+    idxs_labels = np.vstack((idxs[10000:], labels[10000:]))
+    idxs_labels = idxs_labels[:, idxs_labels[1, :].argsort()]
+    idxs = idxs_labels[0, :]
+    print(idxs)
+    cluster_shards = [i for i in range(50)]
+    for i in range(10):
+        rand_set = np.random.choice(cluster_shards, 5, replace=False)
+        print(rand_set)
+        cluster_shards = list(set(cluster_shards) - set(rand_set))
+        idxs_for_cluter = np.array([])
+        for rand in rand_set:
+            print(rand)
+            idxs_for_cluter = np.concatenate((idxs_for_cluter, idxs[rand*1000:(rand+1)*1000]), axis=0)
+            print(len(idxs_for_cluter))
+        print(len(idxs_for_cluter))
+        np.random.shuffle(idxs_for_cluter)
+        for j in range(20):
+            dict_users[i*20+j] = idxs_for_cluter[j*250:(j+1)*250]
+
     return dict_users
 
 

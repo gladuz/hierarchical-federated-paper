@@ -120,7 +120,7 @@ if __name__ == '__main__':
                 local_model = LocalUpdate(args=args, dataset=train_dataset,
                                         idxs=np.arange(5000), logger=logger)
                 w, loss = local_model.update_weights( # update_weights() contain multiple prints
-                    model=cluster_model, global_round=epoch) # w = local model weights
+                    model=copy.deepcopy(cluster_model), global_round=epoch) # w = local model weights
                 cluster_model.load_state_dict(w)
             local_weights.append(copy.deepcopy(w))
             local_losses.append(copy.deepcopy(losses))    
