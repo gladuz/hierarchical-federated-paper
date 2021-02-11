@@ -25,7 +25,7 @@ import random
 
 if __name__ == '__main__':
     start_time = time.time()
-
+    ADDITION_TO_FILENAME = ""
     # define paths
     path_project = os.path.abspath('..')
     logger = SummaryWriter('../logs')
@@ -103,22 +103,21 @@ if __name__ == '__main__':
     # while epoch < args.epochs:        
         local_weights, local_losses, local_accuracies= [], [], []
         print(f'\n | Global Training Round : {epoch+1} |\n')
-        
         # ============== TRAIN ==============
         global_model.train()
         
         # ======= Dynamic training cluster ======= 
         for i in range(args.num_clusters):
+            start_for_cluster = time.time()
             cluster_model = cluster_models[i]
-            losses, weights = None, None
-            for i in range(3):
-                _, weights, losses = fl_train(args, train_dataset, cluster_model, cluster_users[i], cluster_user_groups[i], args.Cepochs, logger)  
-                cluster_model.load_state_dict(weights)
-            local_weights.append(copy.deepcopy(weights))
-            local_losses.append(copy.deepcopy(losses))    
+
+            _, weights, losses = fl_train(args, train_dataset, cluster_model, cluster_users[i], cluster_user_groups[i], args.Cepochs, logger)  
+            local_weights.append(weights)
+            local_losses.append(losses)    
             cluster_models[i] = global_model
+            print("{} th cluster finished training and took {} seconds".format(i, time.time() - start_for_cluster))
 
-
+        ADDITION_TO_FILENAME = "60iternonIID_ORIGINAL_LAST_"
         # # ===== Cluster A ===== 
         # _, A_weights, A_losses = fl_train(args, train_dataset, cluster_modelA, A1, user_groupsA, args.Cepochs, logger)        
         # local_weights.append(copy.deepcopy(A_weights))
@@ -155,20 +154,31 @@ if __name__ == '__main__':
         list_acc, list_loss = [], []
         global_model.eval()
         # print("========== idx ========== ", idx)
-        for c in range(args.num_users):
-        # for c in range(cluster_size):
-        # C = np.random.choice(keylist, int(args.frac * args.num_users), replace=False) # random set of clients
-        # print("C: ", C)
-        # for c in C:
-            local_model = LocalUpdate(args=args, dataset=train_dataset,
-                                      idxs=user_groups[c], logger=logger)
-            acc, loss = local_model.inference(model=global_model)
-            list_acc.append(acc)
-            list_loss.append(loss)
-        train_accuracy.append(sum(list_acc)/len(list_acc))
+        # for c in range(args.num_users):
+        # # for c in range(cluster_size):
+        # # C = np.random.choice(keylist, int(args.frac * args.num_users), replace=False) # random set of clients
+        # # print("C: ", C)
+        # # for c in C:
+        #     local_model = LocalUpdate(args=args, dataset=train_dataset,
+        #                               idxs=user_groups[c], logger=logger)
+        #     acc, loss = local_model.inference(model=global_model)
+        #     list_acc.append(acc)
+        #     list_loss.append(loss)
+        # for c in range(args.num_users):
+        # # for c in range(cluster_size):
+        # # C = np.random.choice(keylist, int(args.frac * args.num_users), replace=False) # random set of clients
+        # # print("C: ", C)
+        # # for c in C:
+        #     local_model = LocalUpdate(args=args, dataset=test_dataset,
+        #                               idxs=user_groups[c], logger=logger)
+        #     acc, loss = local_model.inference(model=global_model)
+        #     list_acc.append(acc)
+        #     list_loss.append(loss)
+        list_acc, list_loss = test_inference(args, global_model, test_dataset)
+
+        train_accuracy.append(list_acc)
         # Add
         testacc_check = 100*train_accuracy[-1]
-        epoch = epoch + 1
 
         # print global training loss after every 'i' rounds
         if (epoch+1) % print_every == 0:
@@ -188,9 +198,8 @@ if __name__ == '__main__':
     print("|---- Test Accuracy: {:.2f}%".format(100*test_acc))
 
     # Saving the objects train_loss and train_accuracy:
-    file_name = '../save/objects/old_HFL4_{}_{}_{}_lr[{}]_C[{}]_iid[{}]_E[{}]_B[{}].pkl'.\
-    format(args.dataset, args.model, epoch, args.lr, args.frac, args.iid,
-           args.local_ep, args.local_bs)
+    file_name = '../save/objects/HFL4_old_{}.pkl'.\
+    format(args.filename)
 
     with open(file_name, 'wb') as f:
         pickle.dump([train_loss, train_accuracy], f)
@@ -204,15 +213,19 @@ if __name__ == '__main__':
     plt.plot(range(len(train_accuracy)), train_accuracy, color='k')
     plt.ylabel('Average Accuracy')
     plt.xlabel('Communication Rounds')
-    plt.savefig('../save/fed_{}_{}_{}_C[{}]_iid[{}]_E[{}]_B[{}]_acc.png'.
+    plt.savefig('../save/fed_{}_{}_{}_C[{}]_iid[{}]_E[{}]_B[{}]_{}_acc.png'.
                 format(args.dataset, args.model, args.epochs, args.frac,
-                       args.iid, args.local_ep, args.local_bs))
+                       args.iid, args.local_ep, args.local_bs, ADDITION_TO_FILENAME))
+
+        # PLOTTING (optional)
+
     # Plot Average Accuracy vs Communication rounds
     plt.figure()
     plt.title('Average loss vs Communication rounds')
     plt.plot(range(len(train_loss)), train_loss, color='k')
     plt.ylabel('Average Accuracy')
     plt.xlabel('Communication Rounds')
-    plt.savefig('../save/old_fed_{}_{}_{}_C[{}]_iid[{}]_E[{}]_B[{}]_loss.png'.
+    plt.savefig('../save/fed_{}_{}_{}_C[{}]_iid[{}]_E[{}]_B[{}]_{}_loss.png'.
                 format(args.dataset, args.model, args.epochs, args.frac,
-                       args.iid, args.local_ep, args.local_bs))
+                       args.iid, args.local_ep, args.local_bs, ADDITION_TO_FILENAME))
+    

@@ -132,9 +132,8 @@ if __name__ == '__main__':
     print("|---- Test Accuracy: {:.2f}%".format(100*test_acc))
 
     # Saving the objects train_loss and train_accuracy:
-    file_name = '../save/objects/FL_{}_{}_{}_lr[{}]_C[{}]_iid[{}]_E[{}]_B[{}].pkl'.\
-        format(args.dataset, args.model, epoch, args.lr, args.frac, args.iid,
-               args.local_ep, args.local_bs)
+    file_name = '../save/objects/FL_{}.pkl'.\
+        format(args.filename)
 
     with open(file_name, 'wb') as f:
         pickle.dump([train_loss, train_accuracy], f)

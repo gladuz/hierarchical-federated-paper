@@ -53,8 +53,9 @@ class LocalUpdate(object):
                                 batch_size=int(len(idxs_test)/10), shuffle=False)
         return trainloader, validloader, testloader
 
-    def update_weights(self, model, global_round, dtype=torch.float32):
+    def update_weights(self, model, global_round, dtype=torch.float32, local_epochs=0):
         # Set mode to train model
+        epoch_count = self.args.local_ep if local_epochs == 0 else local_epochs
         model.train()
         epoch_loss = []
         # Set dtype for criterion
@@ -62,13 +63,12 @@ class LocalUpdate(object):
 
         # Set optimizer for the local updates
         if self.args.optimizer == 'sgd':
-            optimizer = torch.optim.SGD(model.parameters(), lr=self.args.lr,
-                                        momentum=0.5)
+            optimizer = torch.optim.SGD(model.parameters(), lr=self.args.lr, weight_decay=1e-4)
         elif self.args.optimizer == 'adam':
             optimizer = torch.optim.Adam(model.parameters(), lr=self.args.lr,
                                          weight_decay=1e-4)
 
-        for iter in range(self.args.local_ep):
+        for iter in range(epoch_count):
             batch_loss = []
             for batch_idx, (images, labels) in enumerate(self.trainloader):
                 images, labels = images.to(self.device), labels.to(self.device)

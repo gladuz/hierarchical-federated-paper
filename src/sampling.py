@@ -44,7 +44,8 @@ def mnist_noniid(dataset, num_users):
 
     # divide and assign 2 shards/client
     for i in range(num_users):
-        rand_set = [i*2, i*2+1]
+        rand_set = set([i*2, i*2+1])
+        idx_shard = list(set(idx_shard) - rand_set)
         for rand in rand_set:
             dict_users[i] = np.concatenate(
                 (dict_users[i], idxs[rand*num_imgs:(rand+1)*num_imgs]), axis=0)
@@ -213,23 +214,30 @@ def cifar_noniid(dataset, num_users):
     idx_shard = [i for i in range(num_shards)]
     dict_users = {i: np.array([]) for i in range(num_users)}
     idxs = np.arange(num_shards*num_imgs)
-    # labels = dataset.train_labels.numpy()
-    labels = np.array(dataset.train_labels)
+    labels = np.array(dataset.targets)
 
     # sort labels
-    idxs_labels = np.vstack((idxs, labels))
+    idxs_labels = np.vstack((idxs[5000:], labels[5000:]))
     idxs_labels = idxs_labels[:, idxs_labels[1, :].argsort()]
     idxs = idxs_labels[0, :]
 
-    # divide and assign
+    # divide and assign 2 shards/client
     for i in range(num_users):
-        rand_set = set(np.random.choice(idx_shard, 2, replace=False))
+        rand_set = set([i*2, i*2+1])
         idx_shard = list(set(idx_shard) - rand_set)
         for rand in rand_set:
             dict_users[i] = np.concatenate(
                 (dict_users[i], idxs[rand*num_imgs:(rand+1)*num_imgs]), axis=0)
-    return dict_users
-
+    
+    order = [   0,5,10,15,20,3,7,14,18,22,
+                27,28,16,17,36,37,40,41,11,12,
+                31,32,42,43,44,21,23,24,48,49,
+                25,26,29,19,6,8,2,13,33,34,
+                45,46,47,1,4,9,30,35,38,39,]
+    new_dict_users = {i: np.array([]) for i in range(num_users)}
+    for i in range(50):
+        new_dict_users[i] = dict_users[order[i]]
+    return new_dict_users
 
 if __name__ == '__main__':
     dataset_train = datasets.MNIST('./data/mnist/', train=True, download=True,

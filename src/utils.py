@@ -11,6 +11,7 @@ from sampling import mnist_iid, mnist_noniid, mnist_noniid_unequal, mnist_noniid
 from sampling import cifar_iid, cifar_noniid
 from models import MLP, CNNMnist, CNNFashion_Mnist, CNNCifar
 import update
+import math
 #from update import LocalUpdate, test_inference
 
 
@@ -82,6 +83,7 @@ def get_dataset(args):
                 if args.clustered_data:
                     user_groups = mnist_noniid_clustered(train_dataset, args.num_users)
                 else:
+                    print("ss")
                     user_groups = mnist_noniid(train_dataset, args.num_users)
                 
     else:
@@ -172,8 +174,8 @@ def fl_train(args, train_dataset, cluster_global_model, cluster, usergrp, epochs
 
         cluster_global_model.train()
         # m = max(int(args.frac * len(cluster)), 1)
-        # m = max(int(math.ceil(args.frac * len(cluster))), 1)
-        m = min(int(len(cluster)), 10)
+        m = max(int(math.ceil(args.frac * len(cluster))), 1)
+        #m = min(int(len(cluster)), 10)
         # print("=== m ==== ", m)
         # m = 10
         idxs_users = np.random.choice(cluster, m, replace=False)
@@ -181,9 +183,9 @@ def fl_train(args, train_dataset, cluster_global_model, cluster, usergrp, epochs
 
         for idx in idxs_users:
             cluster_local_model = update.LocalUpdate(args=args, dataset=train_dataset, idxs=usergrp[idx], logger=logger)
-            cluster_w, cluster_loss = cluster_local_model.update_weights(model=copy.deepcopy(cluster_global_model), global_round=epoch, dtype=cluster_dtype)
-            cluster_local_weights.append(copy.deepcopy(cluster_w))
-            cluster_local_losses.append(copy.deepcopy(cluster_loss))
+            cluster_w, cluster_loss = cluster_local_model.update_weights(model=cluster_global_model, global_round=epoch, dtype=cluster_dtype)
+            cluster_local_weights.append(cluster_w)
+            cluster_local_losses.append(cluster_loss)
             # print('| Global Round : {} | User : {} | \tLoss: {:.6f}'.format(epoch, idx, cluster_loss))
 
         # averaging global weights
@@ -197,22 +199,22 @@ def fl_train(args, train_dataset, cluster_global_model, cluster, usergrp, epochs
 
         # ============== EVAL ============== 
         # Calculate avg training accuracy over all users at every epoch
-        list_acc, list_loss = [], []
-        cluster_global_model.eval()
+        #list_acc, list_loss = [], []
+        #cluster_global_model.eval()
         # C = np.random.choice(cluster, m, replace=False) # random set of clients
         # print("C: ", C)
         # for c in C:
         # for c in range(len(cluster)):  
-        for c in idxs_users:      
-            cluster_local_model = update.LocalUpdate(args=args, dataset=train_dataset, idxs=usergrp[c], logger=logger)
-            # local_model = LocalUpdate(args=args, dataset=train_dataset,idxs=user_groups[idx], logger=logger)
-            acc, loss = cluster_local_model.inference(model=cluster_global_model, dtype=cluster_dtype)
-            list_acc.append(acc)
-            list_loss.append(loss)
-        # cluster_train_acc.append(sum(list_acc)/len(list_acc))
-        # Add
+        # for c in idxs_users:      
+        #     cluster_local_model = update.LocalUpdate(args=args, dataset=train_dataset, idxs=usergrp[c], logger=logger)
+        #     # local_model = LocalUpdate(args=args, dataset=train_dataset,idxs=user_groups[idx], logger=logger)
+        #     acc, loss = cluster_local_model.inference(model=cluster_global_model, dtype=cluster_dtype)
+        #     list_acc.append(acc)
+        #     list_loss.append(loss)
+        # # cluster_train_acc.append(sum(list_acc)/len(list_acc))
+        # # Add
     # print("Cluster accuracy: ", 100*cluster_train_acc[-1]) 
-    print("Cluster accuracy: ", 100*sum(list_acc)/len(list_acc)) 
+    #print("Cluster accuracy: ", 100*sum(list_acc)/len(list_acc)) 
 
     return cluster_global_model, cluster_global_weights, cluster_loss_avg
 

@@ -74,6 +74,8 @@ def args_parser():
                         for model")
     parser.add_argument('--loss_dtype', default='torch.float32', help="Dtype \
                         for loss or criterion")
+    parser.add_argument('--filename', type=str, default="federated4_main", help="Filename \
+                        for saving the results")
     
     
     args = parser.parse_args()
